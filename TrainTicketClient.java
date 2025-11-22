@@ -6,41 +6,66 @@ public class TrainTicketClient {
     private static final int SERVER_PORT = 12345;
 
     public static void main(String[] args) {
-        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))) {
+        try (
+                Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))
+        ) {
 
             String userInput;
             boolean authenticated = false;
 
             while (!authenticated) {
-                System.out.println("Enter username: ");
+                System.out.print("Enter username: ");
                 String username = stdIn.readLine();
-                System.out.println("Enter password: ");
+
+                System.out.print("Enter password: ");
                 String password = stdIn.readLine();
 
                 out.println(username + ":" + password);
                 String response = in.readLine();
-                if (response.equals("Authenticated")) {
+
+                if ("Authenticated".equals(response)) {
                     authenticated = true;
-                    System.out.println("Authentication successful");
+                    System.out.println("✔ Authentication successful!");
                 } else {
-                    System.out.println("Authentication failed. Please try again.");
+                    System.out.println("✘ Authentication failed. Try again.\n");
                 }
             }
 
-            System.out.println("Authenticated. You can now interact with the server.");
-            System.out.println("Enter 'book' to book a ticket, 'history' to view booking history, 'cancel' to cancel a booking, 'check' to view available seats, or 'exit' to quit.");
+            System.out.println("\nYou can now use the following commands:");
+            System.out.println(" - book            → View list of trains & book using `book <index>`");
+            System.out.println(" - history         → View booking history");
+            System.out.println(" - cancel <index>  → Cancel booking");
+            System.out.println(" - exit            → Quit");
+            System.out.println("\nEnter your commands below:\n");
 
-            while ((userInput = stdIn.readLine()) != null) {
+            while (true) {
+                System.out.print("> ");
+                userInput = stdIn.readLine();
+
+                if (userInput == null) break;
+
                 out.println(userInput);
-                System.out.println("Server response: " + in.readLine());
+
+                StringBuilder serverResponse = new StringBuilder();
+                String line;
+
+                while ((line = in.readLine()) != null && !line.trim().isEmpty()) {
+                    serverResponse.append(line).append("\n");
+                    if (!in.ready()) break;
+                }
+
+                System.out.println("\nSERVER:\n" + serverResponse);
+
                 if (userInput.equals("exit")) {
                     break;
                 }
             }
+
         } catch (IOException e) {
+            System.out.println("Connection lost.");
             e.printStackTrace();
         }
     }
